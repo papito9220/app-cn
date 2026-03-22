@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ContainerCleaner">
+<title>ContainerCleaner</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --groen:#1a6b3c;--groen-mid:#2d8a52;--groen-licht:#e8f5ee;
+  --oranje:#e8640a;--oranje-licht:#fff3eb;
+  --blauw:#1d5fa8;--blauw-licht:#e8f0fb;
+  --rood:#c0392b;--rood-licht:#fdecea;
+  --grijs:#f4f5f6;--grijs2:#e8e9eb;--grijs-rand:#e0e2e5;
+  --tekst:#1a1c1e;--muted:#6b7280;--wit:#ffffff;
+  --radius:10px;--radius-lg:14px;
+  --shadow:0 1px 4px rgba(0,0,0,0.08);--shadow-lg:0 4px 20px rgba(0,0,0,0.14);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f2f5;color:var(--tekst);font-size:14px;min-height:100vh;overflow-x:hidden;}
+.app{display:flex;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--groen);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow-lg);}
+.topbar-back{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:2px 6px;border-radius:6px;}
+.topbar-title{font-size:16px;font-weight:700;flex:1;}
+.topbar-action{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:7px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;}
+.content{flex:1;padding:14px;}
+.bottom-nav{background:var(--wit);border-top:1px solid var(--grijs-rand);display:flex;position:sticky;bottom:0;z-index:50;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 12px;gap:3px;cursor:pointer;border:none;background:none;color:var(--muted);font-size:10px;font-weight:600;transition:color 0.15s;}
+.nav-btn.active{color:var(--groen);}
+.nav-icon{font-size:20px;line-height:1;}
+.nav-badge{position:absolute;top:-4px;right:-6px;background:var(--rood);color:#fff;border-radius:10px;font-size:9px;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;}
+.nav-icon-wrap{position:relative;display:inline-block;}
+.scherm{display:none;}.scherm.actief{display:block;}
+.kaart{background:var(--wit);border-radius:var(--radius-lg);border:1px solid var(--grijs-rand);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden;}
+.kaart-header{padding:13px 16px;border-bottom:1px solid var(--grijs-rand);display:flex;align-items:center;justify-content:space-between;}
+.kaart-titel{font-size:14px;font-weight:700;}
+.kaart-body{padding:14px 16px;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat-kaart{background:var(--wit);border-radius:var(--radius);border:1px solid var(--grijs-rand);padding:14px;box-shadow:var(--shadow);}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:500;}
+.stat-val{font-size:28px;font-weight:800;line-height:1;}
+.c-groen{color:var(--groen);}.c-oranje{color:var(--oranje);}.c-blauw{color:var(--blauw);}.c-rood{color:var(--rood);}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-groen{background:var(--groen-licht);color:var(--groen);}
+.badge-oranje{background:var(--oranje-licht);color:var(--oranje);}
+.badge-blauw{background:var(--blauw-licht);color:var(--blauw);}
+.badge-rood{background:var(--rood-licht);color:var(--rood);}
+.lijst-item{padding:13px 16px;border-bottom:1px solid var(--grijs-rand);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.12s;}
+.lijst-item:last-child{border-bottom:none;}
+.lijst-item:active{background:var(--grijs);}
+.lijst-item-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.lijst-item-info{flex:1;min-width:0;}
+.lijst-item-naam{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lijst-item-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.pijl{color:var(--muted);font-size:16px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:9px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.15s;text-decoration:none;}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:var(--groen);color:#fff;}
+.btn-secondary{background:var(--grijs);color:var(--tekst);border:1px solid var(--grijs-rand);}
+.btn-full{width:100%;display:flex;}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:7px;}
+.btn-wa{background:#25D366;color:#fff;}
+.btn-mail{background:var(--blauw);color:#fff;}
+.btn-rood{background:var(--rood);color:#fff;}
+.form-group{margin-bottom:14px;}
+.form-label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px;}
+.form-control{width:100%;padding:11px 13px;border:1.5px solid var(--grijs-rand);border-radius:9px;font-size:14px;color:var(--tekst);background:var(--wit);outline:none;transition:border-color 0.15s;-webkit-appearance:none;}
+.form-control:focus{border-color:var(--groen);}
+textarea.form-control{resize:vertical;min-height:80px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-sectie{background:var(--grijs);border-radius:var(--radius);padding:14px;margin-bottom:14px;}
+.type-selector{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.type-opt{border:2px solid var(--grijs-rand);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--wit);}
+.type-opt.geselecteerd{border-color:var(--groen);background:var(--groen-licht);}
+.type-opt-icon{font-size:24px;margin-bottom:4px;}
+.type-opt-label{font-size:12px;font-weight:600;color:var(--muted);}
+.type-opt.geselecteerd .type-opt-label{color:var(--groen);}
+.sheet-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;}
+.sheet-backdrop.open{display:flex;}
+.sheet{background:var(--wit);border-radius:20px 20px 0 0;width:100%;max-height:92vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom);}
+.sheet-handle{width:40px;height:4px;background:var(--grijs-rand);border-radius:2px;margin:12px auto 16px;}
+.sheet-header{padding:0 16px 14px;border-bottom:1px solid var(--grijs-rand);display:flex;align-items:center;justify-content:space-between;}
+.sheet-titel{font-size:16px;font-weight:700;}
+.sheet-close{background:var(--grijs);border:none;color:var(--muted);border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.sheet-body{padding:16px;}
+.sheet-footer{padding:12px 16px;border-top:1px solid var(--grijs-rand);display:flex;gap:8px;}
+.foto-zone{border:2px dashed var(--grijs-rand);border-radius:10px;padding:20px;text-align:center;cursor:pointer;background:var(--grijs);}
+.progress{background:var(--grijs-rand);border-radius:20px;height:7px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:20px;transition:width 0.4s;}
+.toggle-rij{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--grijs-rand);}
+.toggle-rij:last-child{border-bottom:none;}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--grijs-rand);border-radius:24px;transition:0.2s;}
+.toggle-slider:before{content:'';position:absolute;width:20px;height:20px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+input:checked+.toggle-slider{background:var(--groen);}
+input:checked+.toggle-slider:before{transform:translateX(20px);}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--tekst);color:#fff;padding:12px 20px;border-radius:30px;font-size:13px;font-weight:500;z-index:200;opacity:0;transition:all 0.3s;white-space:nowrap;max-width:90vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.leeg{text-align:center;padding:36px 20px;color:var(--muted);}
+.leeg-icon{font-size:44px;margin-bottom:10px;}
+.melding-item{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--grijs-rand);align-items:flex-start;}
+.melding-item:last-child{border-bottom:none;}
+.melding-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.detail-veld{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--grijs-rand);}
+.detail-veld:last-child{border-bottom:none;}
+.detail-label{font-size:12px;color:var(--muted);font-weight:500;}
+.detail-waarde{font-size:13px;font-weight:600;text-align:right;max-width:60%;}
+.zoek-wrap{position:relative;margin-bottom:12px;}
+.zoek-input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--grijs-rand);border-radius:10px;font-size:14px;background:var(--wit);outline:none;}
+.zoek-input:focus{border-color:var(--groen);}
+.zoek-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;}
+.cont-pill{background:var(--grijs);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--muted);border:1px solid var(--grijs-rand);}
+.tabs{display:flex;overflow-x:auto;border-bottom:2px solid var(--grijs-rand);margin-bottom:14px;-webkit-overflow-scrolling:touch;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:9px 16px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;flex-shrink:0;}
+.tab.actief{color:var(--groen);border-bottom-color:var(--groen);}
+
+/* WEEK STRIP */
+.week-strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;-webkit-overflow-scrolling:touch;}
+.week-strip::-webkit-scrollbar{display:none;}
+.week-dag{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 10px;border-radius:10px;cursor:pointer;flex-shrink:0;border:1.5px solid var(--grijs-rand);min-width:46px;background:var(--wit);transition:all 0.15s;}
+.week-dag.geselecteerd{background:var(--groen-licht);border-color:var(--groen);}
+.week-dag.heeft-stops{border-color:var(--groen-mid);}
+.week-dag-naam{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;}
+.week-dag.geselecteerd .week-dag-naam{color:var(--groen);}
+.week-dag-num{font-size:15px;font-weight:700;}
+.week-dag.geselecteerd .week-dag-num{color:var(--groen);}
+.week-dag-dot{width:7px;height:7px;border-radius:50%;background:var(--groen);}
+.week-dag-dot.leeg{background:transparent;}
+.week-dag-vandaag .week-dag-num{background:var(--groen);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
+
+/* KALENDER */
+.kalender-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.kalender-maand{font-size:15px;font-weight:700;}
+.kal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.kal-header{text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:5px 0;text-transform:uppercase;}
+.kal-dag{text-align:center;padding:5px 2px;border-radius:8px;cursor:pointer;min-height:44px;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.kal-dag:active{background:var(--grijs2);}
+.kal-dag.leeg{pointer-events:none;opacity:0;}
+.kal-dag.vandaag .kal-num{background:var(--groen);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
+.kal-dag.gesel{background:var(--groen-licht);}
+.kal-num{font-size:13px;font-weight:500;width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
+.kal-dots{display:flex;gap:2px;justify-content:center;}
+.kal-dot{width:5px;height:5px;border-radius:50%;}
+
+/* ROUTE KAART */
+.route-kaart{background:var(--wit);border-radius:var(--radius-lg);border:1px solid var(--grijs-rand);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;transition:all 0.15s;}
+.route-kaart.sleep-actief{box-shadow:0 8px 24px rgba(0,0,0,0.18);border-color:var(--groen);opacity:0.9;}
+.route-kaart-header{padding:12px 14px;display:flex;align-items:flex-start;gap:10px;}
+.route-nr{width:28px;height:28px;border-radius:50%;background:var(--groen);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;margin-top:2px;}
+.route-nr.gedaan{background:var(--groen-licht);color:var(--groen);}
+.route-info{flex:1;}
+.route-naam{font-size:14px;font-weight:700;}
+.route-adres{font-size:12px;color:var(--muted);margin-top:2px;}
+.route-conts{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.route-footer{padding:10px 14px;border-top:1px solid var(--grijs-rand);background:var(--grijs);display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.sleep-handvat{cursor:grab;color:var(--muted);font-size:22px;padding:2px 4px;line-height:1;user-select:none;touch-action:none;flex-shrink:0;}
+.sleep-handvat:active{cursor:grabbing;}
+.drag-ghost{position:fixed;z-index:999;pointer-events:none;opacity:0.88;border-radius:var(--radius-lg);border:2px solid var(--groen);box-shadow:0 12px 40px rgba(0,0,0,0.2);}
+.drag-placeholder{border:2px dashed var(--groen);border-radius:var(--radius-lg);background:var(--groen-licht);margin-bottom:10px;height:70px;display:flex;align-items:center;justify-content:center;color:var(--groen);font-size:13px;font-weight:600;}
+
+@media(min-width:600px){
+  .stats-grid{grid-template-columns:repeat(4,1fr);}
+  .content{max-width:700px;margin:0 auto;padding:20px 20px 80px;}
+  .form-row{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:599px){
+  .content{padding:12px 12px 80px;}
+  .form-row{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar" id="topbar">
+    <span id="topbar-back-btn" style="display:none;"><button class="topbar-back" onclick="gaTerug()">←</button></span>
+    <span class="topbar-title" style="display:flex;align-items:center;gap:10px;flex:1;">
+      <span style="font-size:16px;font-weight:800;color:#fff;letter-spacing:-0.5px;">Container<span style="color:#90EE90;">Cleaner</span> 🚛</span>
+      <span id="topbar-titel" style="font-size:13px;opacity:0.75;font-weight:500;"></span>
+    </span>
+    <span id="topbar-actie"></span>
+  </div>
+  <div id="sync-status" style="text-align:center;font-size:11px;font-weight:600;color:#fff;padding:4px 12px;transition:all 0.3s;min-height:0;"></div>
+  <div class="content">
+    <div class="scherm actief" id="scherm-dashboard"><div class="stats-grid" id="stats-grid"></div><div class="kaart" id="meldingen-preview"></div><div class="kaart"><div class="kaart-header"><span class="kaart-titel">📦 Pakket saldo's</span></div><div id="saldo-lijst"></div></div>
+    <div class="kaart" id="betalingen-sectie"></div></div>
+    <div class="scherm" id="scherm-klanten">
+      <div class="tabs"><div class="tab actief" onclick="filterKlanten('alle',this)">Alle</div><div class="tab" onclick="filterKlanten('pakket',this)">Pakket</div><div class="tab" onclick="filterKlanten('contract',this)">Contract</div><div class="tab" onclick="filterKlanten('alert',this)">⚠️ Actie</div></div>
+      <div class="zoek-wrap"><span class="zoek-icon">🔍</span><input type="search" class="zoek-input" placeholder="Zoek klant..." oninput="zoekKlant(this.value)"></div>
+      <div id="klanten-lijst"></div>
+    </div>
+    <div class="scherm" id="scherm-klant-detail"><div id="klant-detail-inhoud"></div></div>
+    <div class="scherm" id="scherm-planning">
+      <div id="week-strip-container"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div><div style="font-size:15px;font-weight:700;" id="dag-titel">Vandaag</div><div style="font-size:12px;color:var(--muted);" id="dag-sub"></div></div>
+        <button class="btn btn-primary btn-sm" onclick="openStopSheet()">+ Stop</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="btn btn-secondary btn-sm" id="kal-btn" onclick="toggleKalender()">📅 Kalender</button>
+        <button class="btn btn-secondary btn-sm" id="maps-btn">🗺️ Route in Maps</button>
+      </div>
+      <div id="kalender-container" style="display:none;"></div>
+      <div id="route-container"></div>
+    </div>
+    <div class="scherm" id="scherm-meldingen"><div class="kaart" id="urgente-meldingen"></div><div class="kaart" style="margin-top:12px;"><div class="kaart-header"><span class="kaart-titel">⚙️ Instellingen</span></div><div class="kaart-body" id="melding-inst"></div></div></div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="toonScherm('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</button>
+    <button class="nav-btn" onclick="toonScherm('klanten',this)"><span class="nav-icon-wrap"><span class="nav-icon">👥</span></span>Klanten</button>
+    <button class="nav-btn" onclick="toonScherm('planning',this)"><span class="nav-icon">🗓️</span>Route</button>
+    <button class="nav-btn" onclick="toonScherm('meldingen',this)"><span class="nav-icon-wrap"><span class="nav-icon">🔔</span><span class="nav-badge" id="melding-badge" style="display:none">0</span></span>Meldingen</button>
+  </div>
+</div>
+
+<!-- KLANT SHEET -->
+<div class="sheet-backdrop" id="sheet-klant">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-titel" id="sheet-klant-titel">Nieuwe klant</span><button class="sheet-close" onclick="sluitSheet('sheet-klant')">✕</button></div>
+    <div class="sheet-body">
+      <input type="hidden" id="klant-edit-id">
+      <div class="type-selector"><div class="type-opt geselecteerd" id="type-pakket" onclick="selecteerType('pakket')"><div class="type-opt-icon">📦</div><div class="type-opt-label">Pakket (beurten)</div></div><div class="type-opt" id="type-contract" onclick="selecteerType('contract')"><div class="type-opt-icon">📋</div><div class="type-opt-label">Contract (maandelijks)</div></div></div>
+      <div class="form-group"><label class="form-label">Naam / Bedrijf *</label><input type="text" class="form-control" id="k-naam" placeholder="bv. Bakkerij Janssen"></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Telefoon</label><input type="tel" class="form-control" id="k-tel" placeholder="+32 ..."></div><div class="form-group"><label class="form-label">E-mail</label><input type="email" class="form-control" id="k-mail" placeholder="info@..."></div></div>
+      <div class="form-group"><label class="form-label">Adres</label><input type="text" class="form-control" id="k-adres" placeholder="Straat nr, gemeente"></div>
+      <div id="veld-pakket"><div class="form-row"><div class="form-group"><label class="form-label">Aantal beurten</label><div style="display:flex;gap:8px;"><select class="form-control" id="k-beurten" style="flex:1;" onchange="var ci=document.getElementById('k-beurten-custom');ci.style.display=this.value==='custom'?'block':'none';"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option><option value="50">50</option><option value="custom">Eigen getal...</option></select><input type="number" id="k-beurten-custom" class="form-control" style="flex:1;display:none;" min="1" max="999" placeholder="bv. 15"></div></div><div class="form-group"><label class="form-label">Startdatum</label><input type="date" class="form-control" id="k-startdatum"></div></div></div>
+      <div id="veld-contract" style="display:none;"><div class="form-row"><div class="form-group"><label class="form-label">Start</label><input type="date" class="form-control" id="k-cstart"></div><div class="form-group"><label class="form-label">Einde</label><input type="date" class="form-control" id="k-ceind"></div></div><div class="form-group"><label class="form-label">Frequentie</label><select class="form-control" id="k-freq"><option>Wekelijks</option><option selected>2x per maand</option><option>Maandelijks</option></select></div></div>
+      <div class="form-group"><label class="form-label">Containers</label><div id="containers-invoer"></div><button class="btn btn-secondary btn-sm" style="margin-top:6px;" onclick="voegContainerToe()">+ Toevoegen</button></div>
+      <div class="form-group"><label class="form-label">Notitie</label><textarea class="form-control" id="k-notitie" placeholder="Optioneel..."></textarea></div>
+    </div>
+    <div class="sheet-footer"><button class="btn btn-secondary" style="flex:1;" onclick="sluitSheet('sheet-klant')">Annuleer</button><button class="btn btn-primary" style="flex:2;" onclick="slaKlantOp()">✓ Opslaan</button></div>
+  </div>
+</div>
+
+<!-- STOP SHEET -->
+<div class="sheet-backdrop" id="sheet-stop">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-titel">Stop toevoegen aan route</span><button class="sheet-close" onclick="sluitSheet('sheet-stop')">✕</button></div>
+    <div class="sheet-body">
+      <div class="form-group"><label class="form-label">Datum</label><input type="date" class="form-control" id="stop-datum"></div>
+      <div class="form-group">
+        <label class="form-label">Klant zoeken</label>
+        <input type="text" class="form-control" id="stop-zoek" placeholder="Typ naam klant..." oninput="zoekStopKlant(this.value)" autocomplete="off">
+        <div id="stop-suggesties" style="margin-top:6px;border:1px solid var(--grijs-rand);border-radius:9px;overflow:hidden;display:none;background:var(--wit);"></div>
+        <input type="hidden" id="stop-klant-id">
+        <div id="stop-klant-gekozen" style="display:none;margin-top:8px;padding:10px 12px;background:var(--groen-licht);border-radius:9px;border:1px solid var(--groen);font-weight:600;font-size:13px;color:var(--groen);align-items:center;justify-content:space-between;"></div>
+      </div>
+      <div id="stop-containers-wrap" style="display:none;"><div class="form-group"><label class="form-label">Welke containers worden gereinigd?</label><div id="stop-containers-selectie"></div></div></div><div class="form-row"><div class="form-group"><label class="form-label">Tijdstip</label><select class="form-control" id="stop-tijd"><option value="voormiddag">Voormiddag</option><option value="namiddag">Namiddag</option></select></div><div class="form-group"><label class="form-label">Notitie</label><input type="text" class="form-control" id="stop-notitie" placeholder="Optioneel..."></div></div>
+    </div>
+    <div class="sheet-footer"><button class="btn btn-secondary" style="flex:1;" onclick="sluitSheet('sheet-stop')">Annuleer</button><button class="btn btn-primary" style="flex:2;" onclick="slaStopOp()">✓ Toevoegen</button></div>
+  </div>
+</div>
+
+<!-- REINIGING SHEET -->
+<div class="sheet-backdrop" id="sheet-reiniging">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-titel">🧹 Reiniging voltooien</span><button class="sheet-close" onclick="sluitSheet('sheet-reiniging')">✕</button></div>
+    <div class="sheet-body">
+      <input type="hidden" id="rein-klant-id" data-stop-id="">
+      <div class="form-sectie" id="rein-klant-info"></div>
+      <div class="form-group"><label class="form-label">📷 Foto bewijs</label><div id="foto-area"><div class="foto-zone" onclick="document.getElementById('foto-input').click()"><div style="font-size:32px;margin-bottom:8px;">📷</div><div style="font-size:13px;color:var(--muted);">Tik om foto te maken of te kiezen</div></div><input type="file" id="foto-input" accept="image/*" capture="environment" style="display:none;" onchange="fotoGekozen(this)"></div><div id="foto-preview-wrap" style="display:none;"><img id="foto-preview" style="width:100%;border-radius:10px;max-height:180px;object-fit:cover;"><button class="btn btn-secondary btn-sm" style="margin-top:6px;" onclick="verwijderFoto()">✕ Verwijder</button></div></div>
+      <div class="form-group"><label class="form-label">Bericht naar klant</label><textarea class="form-control" id="rein-bericht" rows="5"></textarea></div>
+      <div class="form-group"><label class="form-label">Interne notitie</label><input type="text" class="form-control" id="rein-notitie" placeholder="Optioneel..."></div>
+    </div>
+    <div class="sheet-footer" style="flex-direction:column;gap:8px;"><div style="display:flex;gap:8px;"><button class="btn btn-wa" style="flex:1;" onclick="stuurWA()">💬 WhatsApp</button><button class="btn btn-mail" style="flex:1;" onclick="stuurMail()">📧 E-mail</button></div><button class="btn btn-primary btn-full" onclick="bevestigReiniging()">✓ Reiniging voltooien</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== CONFIGURATIE — pas WEBAPP_URL aan na deployen =====
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzi2xRIiuAEoPUbMfvfB4Fnkj7UlZ5uerEBa-HaCCyM-oAda3npUrit3uDHv0MyIpU/exec';
+
+let DB={klanten:[],reinigingen:[],routes:[],betalingen:[],inst:{pakket_drempel:3,wa:true,mail:true,herinnering:true,bevestiging:true}};
+let klantFilter='alle',klantZoek='',huidigScherm='dashboard',schermHistorie=[];
+let fotoData=null,planDatum='',kalZichtbaar=false,kalMaand=new Date();
+let huidigKlantType='pakket',containers=[];
+let isOnline=true, syncBezig=false;
+// drag state
+let dragEl=null,dragGhost=null,dragPlaceholder=null,dragOffsetY=0,dragDatum='';
+
+const vandaag=()=>new Date().toISOString().slice(0,10);
+const uuid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
+const fmtD=d=>{if(!d)return'—';const[y,m,da]=d.split('-');return`${da}/${m}/${y}`;};
+const dagenTot=ds=>{if(!ds)return null;const n=new Date();n.setHours(0,0,0,0);return Math.round((new Date(ds)-n)/86400000);};
+const isAlert=k=>{if(k.type==='pakket')return k.resterendeBeurten<=DB.inst.pakket_drempel&&k.resterendeBeurten>=0;if(k.type==='contract'){const d=dagenTot(k.contractEind);if(d!==null&&d<=7)return true;if(!DB.betalingen)return false;return getBetalingStatus(k.id,huidigeMaand())==='open';}return false;};
+const telAlert=()=>DB.klanten.filter(isAlert).length;
+const routeVoorDag=d=>DB.routes.filter(r=>r.datum===d).sort((a,b)=>a.volgorde-b.volgorde);
+const dagNamen=['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
+const dagKort=['zo','ma','di','wo','do','vr','za'];
+const mndNamen=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+const MndNamen=['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
+
+// ===== SYNC MET GOOGLE SHEETS =====
+function toonSyncStatus(tekst, kleur){
+  const el=document.getElementById('sync-status');
+  if(el){el.textContent=tekst;el.style.background=kleur||'rgba(0,0,0,0.3)';}
+}
+
+async function api(actie, data){
+  if(!WEBAPP_URL||WEBAPP_URL==='JOUW_WEBAPP_URL_HIER'){
+    console.warn('Webapp URL niet ingesteld — werkt offline');
+    return null;
+  }
+  try{
+    const resp=await fetch(WEBAPP_URL,{
+      method:'POST',
+      body:JSON.stringify({actie,data:data||{}})
+    });
+    const json=await resp.json();
+    if(!json.ok) throw new Error(json.fout||'Onbekende fout');
+    return json.data;
+  } catch(e){
+    console.error('API fout:',e);
+    return null;
+  }
+}
+
+async function laadDB(){
+  // Laad eerst ALLES uit localStorage (snel, werkt ook offline)
+  const lokaal=localStorage.getItem('cc_sheets');
+  if(lokaal){
+    try {
+      const p=JSON.parse(lokaal);
+      DB.klanten=p.klanten||[];
+      DB.routes=p.routes||[];
+      DB.reinigingen=p.reinigingen||[];
+      DB.betalingen=p.betalingen||[];
+      DB.inst=p.inst||DB.inst;
+    } catch(e){}
+  }
+  // Render meteen met lokale data
+  renderDashboard();
+  updateBadge();
+  // Sync met Google Sheets op achtergrond
+  toonSyncStatus('🔄 Synchroniseren…','rgba(29,95,168,0.85)');
+  const remote=await api('laadAlles');
+  if(remote){
+    DB.klanten=remote.klanten||[];
+    DB.routes=remote.routes||[];
+    DB.reinigingen=remote.reinigingen||[];
+    DB.betalingen=remote.betalingen||[];
+    slaLokaal();
+    // Herrender na sync
+    renderDashboard();
+    updateBadge();
+    if(huidigeScr==='planning') renderPlanning();
+    else if(huidigeScr==='klanten') renderKlanten();
+    toonSyncStatus('✓ Gesynchroniseerd','rgba(26,107,60,0.85)');
+    setTimeout(()=>toonSyncStatus('','transparent'),2500);
+  } else {
+    toonSyncStatus('⚠️ Offline — lokale data','rgba(232,100,10,0.85)');
+    setTimeout(()=>toonSyncStatus('','transparent'),3000);
+  }
+}
+
+function slaLokaal(){
+  localStorage.setItem('cc_sheets',JSON.stringify({klanten:DB.klanten,routes:DB.routes,reinigingen:DB.reinigingen,betalingen:DB.betalingen||[],inst:DB.inst}));
+}
+
+async function slaDB(){
+  slaLokaal();
+}
+
+async function apiSlaKlantOp(klant){
+  slaLokaal();
+  toonSyncStatus('🔄 Opslaan…','rgba(29,95,168,0.85)');
+  const ok=await api('slaKlantOp',klant);
+  if(ok) toonSyncStatus('✓ Opgeslagen in Google Sheets','rgba(26,107,60,0.85)');
+  else toonSyncStatus('⚠️ Lokaal opgeslagen (geen verbinding)','rgba(232,100,10,0.85)');
+  setTimeout(()=>toonSyncStatus('','transparent'),2500);
+}
+
+async function apiVerwijderKlant(id){
+  slaLokaal();
+  await api('verwijderKlant',{id});
+}
+
+async function apiSlaStopOp(stop){
+  slaLokaal();
+  await api('slaStopOp',stop);
+}
+
+async function apiVerwijderStop(id){
+  slaLokaal();
+  await api('verwijderStop',{id});
+}
+
+async function apiUpdateVolgorde(stops){
+  slaLokaal();
+  await api('updateVolgorde',{stops});
+}
+
+async function apiSlaReinigingOp(rein, nieuwResterend){
+  slaLokaal();
+  await api('slaReinigingOp',{...rein, nieuwResterend});
+}
+
+// ===== NAV =====
+function toonScherm(naam,navBtn){
+  document.querySelectorAll('.scherm').forEach(s=>s.classList.remove('actief'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('scherm-'+naam).classList.add('actief');
+  if(navBtn)navBtn.classList.add('active');
+  document.getElementById('topbar-back-btn').style.display='none';
+  document.getElementById('topbar-actie').innerHTML='';
+  huidigScherm=naam;schermHistorie=[naam];
+  const titels={dashboard:'',klanten:'Klanten',planning:'Route',meldingen:'Meldingen'};
+  document.getElementById('topbar-titel').textContent=titels[naam]||naam;
+  if(naam==='klanten'){const b=document.createElement('button');b.className='topbar-action';b.textContent='+ Nieuw';b.onclick=()=>openKlantSheet();document.getElementById('topbar-actie').appendChild(b);renderKlanten();}
+  else if(naam==='dashboard')renderDashboard();
+  else if(naam==='planning')renderPlanning();
+  else if(naam==='meldingen')renderMeldingen();
+}
+function toonKlantDetail(id){
+  schermHistorie.push('klant-detail');
+  document.querySelectorAll('.scherm').forEach(s=>s.classList.remove('actief'));
+  document.getElementById('scherm-klant-detail').classList.add('actief');
+  document.getElementById('topbar-back-btn').style.display='';
+  const k=DB.klanten.find(x=>x.id===id);
+  document.getElementById('topbar-titel').textContent=k?k.naam:'Klant';
+  const b=document.createElement('button');b.className='topbar-action';b.textContent='✏️ Bewerk';b.onclick=()=>openKlantSheet(id);
+  document.getElementById('topbar-actie').innerHTML='';document.getElementById('topbar-actie').appendChild(b);
+  renderKlantDetail(id);
+}
+function gaTerug(){
+  schermHistorie.pop();
+  const v=schermHistorie[schermHistorie.length-1]||'klanten';
+  document.querySelectorAll('.scherm').forEach(s=>s.classList.remove('actief'));
+  document.getElementById('scherm-'+v).classList.add('actief');
+  document.getElementById('topbar-back-btn').style.display='none';
+  document.getElementById('topbar-actie').innerHTML='';
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const nm=document.querySelector(`.nav-btn[onclick*="'${v}'"]`);
+  if(nm)nm.classList.add('active');
+  const titels={dashboard:'',klanten:'Klanten',planning:'Route',meldingen:'Meldingen'};
+  document.getElementById('topbar-titel').textContent=titels[v]||v;
+  if(v==='klanten'){const b=document.createElement('button');b.className='topbar-action';b.textContent='+ Nieuw';b.onclick=()=>openKlantSheet();document.getElementById('topbar-actie').appendChild(b);}
+}
+function toast(m,k){const e=document.getElementById('toast');e.textContent=m;e.style.background=k||'#1a1c1e';e.classList.add('show');clearTimeout(window._tt);window._tt=setTimeout(()=>e.classList.remove('show'),3000);}
+function updateBadge(){const n=telAlert();const b=document.getElementById('melding-badge');b.textContent=n;b.style.display=n>0?'':'none';}
+function sluitSheet(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.sheet-backdrop').forEach(b=>{b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open');});});
+
+// ===== DASHBOARD =====
+function renderDashboard(){
+  const td=vandaag();
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-kaart"><div class="stat-label">Actieve klanten</div><div class="stat-val c-groen">${DB.klanten.length}</div></div>
+    <div class="stat-kaart"><div class="stat-label">Vandaag gereinigd</div><div class="stat-val c-blauw">${DB.reinigingen.filter(r=>r.datum===td).length}</div></div>
+    <div class="stat-kaart"><div class="stat-label">Pakket bijna op</div><div class="stat-val c-oranje">${DB.klanten.filter(k=>k.type==='pakket'&&k.resterendeBeurten>0&&k.resterendeBeurten<=DB.inst.pakket_drempel).length}</div></div>
+    <div class="stat-kaart"><div class="stat-label">Verlopen contract</div><div class="stat-val c-rood">${DB.klanten.filter(k=>{if(k.type==='contract'){const d=dagenTot(k.contractEind);return d!==null&&d<0;}return false;}).length}</div></div>`;
+  const al=DB.klanten.filter(isAlert).slice(0,4);
+  let mH=`<div class="kaart-header"><span class="kaart-titel">🔔 Meldingen</span></div>`;
+  if(!al.length)mH+=`<div class="leeg"><div class="leeg-icon">✅</div><div style="font-size:13px;">Geen meldingen</div></div>`;
+  else{mH+=`<div class="kaart-body">`;al.forEach(k=>{let t='',c='var(--oranje)';if(k.type==='pakket'){t=`Pakket bijna op — ${k.resterendeBeurten} beurt(en)`;}else{const d=dagenTot(k.contractEind);if(d<0){t='Contract verlopen';c='var(--rood)';}else{t=`Contract vervalt over ${d} dag(en)`;}}mH+=`<div class="melding-item"><div class="melding-dot" style="background:${c}"></div><div><div style="font-size:13px;font-weight:600;">${k.naam}</div><div style="font-size:12px;color:var(--muted);">${t}</div></div></div>`;});mH+=`</div>`;}
+  document.getElementById('meldingen-preview').innerHTML=mH;
+  let sH='';
+  DB.klanten.forEach(k=>{let inf='',pct=100,kl='var(--groen)';if(k.type==='pakket'){pct=k.aantalBeurten>0?Math.round(k.resterendeBeurten/k.aantalBeurten*100):100;inf=`<strong>${k.resterendeBeurten}</strong>/${k.aantalBeurten} beurten`;if(k.resterendeBeurten<=DB.inst.pakket_drempel)kl=k.resterendeBeurten<=1?'var(--rood)':'var(--oranje)';}else{const d=dagenTot(k.contractEind);if(d===null){inf='Contract actief';}else if(d<0){inf='Verlopen';kl='var(--rood)';pct=100;}else{inf=`Nog ${d} dag(en)`;pct=Math.min(100,Math.round(d/30*100));}}
+    sH+=`<div class="lijst-item" onclick="toonKlantDetail('${k.id}')"><div class="lijst-item-icon" style="background:${k.type==='pakket'?'var(--blauw-licht)':'var(--groen-licht)'};">${k.type==='pakket'?'📦':'📋'}</div><div class="lijst-item-info"><div class="lijst-item-naam">${k.naam}</div><div style="margin-top:5px;"><div class="progress"><div class="progress-fill" style="width:${pct}%;background:${kl};"></div></div></div><div style="font-size:11px;color:var(--muted);margin-top:3px;">${inf}</div></div></div>`;
+  });
+  document.getElementById('saldo-lijst').innerHTML=sH||'<div class="leeg"><div style="font-size:13px;">Geen klanten</div></div>';
+
+  // Betalingen sectie
+  if(document.getElementById('betalingen-sectie')){
+    var bm=huidigeMaand();
+    var cklanten=DB.klanten.filter(function(k){return k.type==='contract';});
+    var bh='<div class="kaart-header"><span class="kaart-titel">💶 Betalingen — '+maandLabel(bm)+'</span></div><div>';
+    if(!cklanten.length){bh+='<div class="leeg"><div style="font-size:13px;">Geen contractklanten</div></div>';}
+    else{cklanten.forEach(function(k){
+      var status=getBetalingStatus(k.id,bm);
+      var badge=status==='betaald'?'<span class="badge badge-groen">✓ Betaald</span>':status==='factuur_aangemaakt'?'<span class="badge badge-blauw">📋 Factuur aangemaakt</span>':'<span class="badge badge-rood">⚠️ Open</span>';
+      bh+='<div class="lijst-item" style="flex-wrap:wrap;gap:8px;">'+
+        '<div class="lijst-item-icon" style="background:var(--groen-licht);">📋</div>'+
+        '<div class="lijst-item-info"><div class="lijst-item-naam">'+k.naam+'</div><div class="lijst-item-sub">'+(k.frequentie||'Contract')+'</div></div>'+
+        '<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">'+badge+
+        '<select class="form-control" style="font-size:11px;padding:3px 6px;width:auto;" data-kid="'+k.id+'" data-maand="'+bm+'" onchange="updateBetaling(this.dataset.kid,this.dataset.maand,this.value)">'+
+        '<option value="open"'+(status==='open'?' selected':'')+'>⚠️ Open</option>'+
+        '<option value="factuur_aangemaakt"'+(status==='factuur_aangemaakt'?' selected':'')+'>📋 Factuur aangemaakt</option>'+
+        '<option value="betaald"'+(status==='betaald'?' selected':'')+'>✓ Betaald</option>'+
+        '</select></div></div>';
+    });}
+    bh+='</div>';
+    document.getElementById('betalingen-sectie').innerHTML=bh;
+  }
+
+  updateBadge();
+}
+
+// ===== KLANTEN =====
+function renderKlanten(){
+  let kl=DB.klanten;
+  if(klantFilter==='pakket')kl=kl.filter(k=>k.type==='pakket');
+  else if(klantFilter==='contract')kl=kl.filter(k=>k.type==='contract');
+  else if(klantFilter==='alert')kl=kl.filter(isAlert);
+  if(klantZoek)kl=kl.filter(k=>k.naam.toLowerCase().includes(klantZoek.toLowerCase())||k.adres.toLowerCase().includes(klantZoek.toLowerCase()));
+  const el=document.getElementById('klanten-lijst');
+  if(!kl.length){el.innerHTML=`<div class="leeg"><div class="leeg-icon">👥</div><div style="font-size:13px;">Geen klanten gevonden</div></div>`;return;}
+  el.innerHTML=kl.map(k=>{
+    const sub=k.type==='pakket'?`${k.resterendeBeurten}/${k.aantalBeurten} beurten`:(()=>{const d=dagenTot(k.contractEind);return d===null?'Actief':d<0?'❌ Verlopen':`Nog ${d} dgn`;})();
+    return `<div class="kaart lijst-item" style="margin-bottom:8px;" onclick="toonKlantDetail('${k.id}')"><div class="lijst-item-icon" style="background:${k.type==='pakket'?'var(--blauw-licht)':'var(--groen-licht)'};">${k.type==='pakket'?'📦':'📋'}</div><div class="lijst-item-info"><div class="lijst-item-naam">${k.naam}</div><div class="lijst-item-sub">${k.adres}</div><div style="margin-top:4px;"><span class="badge ${k.type==='pakket'?'badge-blauw':'badge-groen'}">${k.type==='pakket'?'Pakket':'Contract'}</span>${isAlert(k)?' <span class="badge badge-rood">⚠️</span>':''}</div><div class="lijst-item-sub">${sub}</div></div><span class="pijl">›</span></div>`;
+  }).join('');
+}
+function filterKlanten(t,el){klantFilter=t;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('actief'));el.classList.add('actief');renderKlanten();}
+function zoekKlant(v){klantZoek=v;renderKlanten();}
+
+function renderKlantDetail(id){
+  const k=DB.klanten.find(x=>x.id===id);if(!k)return;
+  const rein=DB.reinigingen.filter(r=>r.klantId===id).sort((a,b)=>b.datum.localeCompare(a.datum));
+  let saldo='';
+  if(k.type==='pakket'){const pct=k.aantalBeurten>0?Math.round(k.resterendeBeurten/k.aantalBeurten*100):100;const kl=k.resterendeBeurten<=1?'var(--rood)':k.resterendeBeurten<=DB.inst.pakket_drempel?'var(--oranje)':'var(--groen)';saldo=`<div class="kaart" style="margin-bottom:12px;"><div class="kaart-header"><span class="kaart-titel">📦 Pakket</span></div><div class="kaart-body"><div style="font-size:32px;font-weight:800;color:${kl};">${k.resterendeBeurten}</div><div style="font-size:13px;color:var(--muted);">van ${k.aantalBeurten} beurten resterend</div><div class="progress" style="margin-top:10px;"><div class="progress-fill" style="width:${pct}%;background:${kl};"></div></div></div></div>`;}
+  else{const d=dagenTot(k.contractEind);const st=d===null?'Actief':d<0?'❌ Verlopen':`Nog ${d} dagen`;const kl=d!==null&&d<0?'var(--rood)':d!==null&&d<=7?'var(--oranje)':'var(--groen)';saldo=`<div class="kaart" style="margin-bottom:12px;"><div class="kaart-header"><span class="kaart-titel">📋 Contract</span></div><div class="kaart-body"><div style="font-size:18px;font-weight:700;color:${kl};">${st}</div><div style="font-size:12px;color:var(--muted);margin-top:4px;">${fmtD(k.contractStart)} → ${fmtD(k.contractEind)}</div>${k.frequentie?`<div style="margin-top:6px;"><span class="badge badge-groen">${k.frequentie}</span></div>`:''}</div></div>`;}
+  const rh=rein.slice(0,5).map(r=>`<div class="detail-veld"><span class="detail-label">${fmtD(r.datum)}</span><span class="detail-waarde">${r.foto?'📷':'—'} ${r.berichtVerstuurd?'<span class="badge badge-groen">✓</span>':''}</span></div>`).join('')||'<div style="color:var(--muted);font-size:13px;">Nog geen reinigingen</div>';
+  document.getElementById('klant-detail-inhoud').innerHTML=`${saldo}
+    <div class="kaart" style="margin-bottom:12px;"><div class="kaart-header"><span class="kaart-titel">📋 Info</span></div><div class="kaart-body">
+      <div class="detail-veld"><span class="detail-label">Adres</span><span class="detail-waarde">${k.adres||'—'}</span></div>
+      <div class="detail-veld"><span class="detail-label">Tel</span><span class="detail-waarde"><a href="tel:${k.tel}" style="color:var(--blauw);text-decoration:none;">${k.tel||'—'}</a></span></div>
+      <div class="detail-veld"><span class="detail-label">E-mail</span><span class="detail-waarde"><a href="mailto:${k.mail}" style="color:var(--blauw);text-decoration:none;font-size:12px;">${k.mail||'—'}</a></span></div>
+      ${k.notitie?`<div class="detail-veld"><span class="detail-label">Notitie</span><span class="detail-waarde">${k.notitie}</span></div>`:''}
+    </div></div>
+    <div class="kaart" style="margin-bottom:12px;"><div class="kaart-header"><span class="kaart-titel">🗑️ Containers (${k.containers.length})</span></div><div class="kaart-body" style="display:flex;flex-wrap:wrap;gap:6px;">${k.containers.map(c=>`<span class="cont-pill">${c.naam}</span>`).join('')}</div></div>
+    <div class="kaart" style="margin-bottom:12px;"><div class="kaart-header"><span class="kaart-titel">🧹 Historiek</span></div><div class="kaart-body">${rh}</div></div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;"><button class="btn btn-wa" style="flex:1;" onclick="stuurWAKlant('${id}')">💬 WhatsApp</button><button class="btn btn-mail" style="flex:1;" onclick="stuurMailKlant('${id}')">📧 E-mail</button></div>
+    <button class="btn btn-primary btn-full" onclick="openReinigingSheet('${id}')">🧹 Reiniging registreren</button>
+    <div style="height:10px;"></div>
+    <button class="btn btn-secondary btn-full" onclick="verwijderKlant('${id}')">🗑️ Klant verwijderen</button>`;
+}
+
+// ===== PLANNING =====
+function renderPlanning(){
+  renderWeekStrip();
+  renderDagTitel(planDatum);
+  renderRoute(planDatum);
+  if(kalZichtbaar)renderKalender();
+  document.getElementById('maps-btn').onclick=()=>{
+    const stops=routeVoorDag(planDatum);
+    if(!stops.length){toast('Geen stops op deze dag');return;}
+    const adr=stops.map(s=>{const k=DB.klanten.find(x=>x.id===s.klantId);return k?k.adres:'';}).filter(Boolean);
+    window.open('https://maps.google.com/?q='+encodeURIComponent(adr.join(' naar ')),'_blank');
+  };
+}
+
+function renderDagTitel(datum){
+  const d=new Date(datum+'T12:00:00');
+  const isVandaag=datum===vandaag();
+  document.getElementById('dag-titel').textContent=(isVandaag?'Vandaag — ':'')+dagNamen[d.getDay()];
+  document.getElementById('dag-sub').textContent=`${d.getDate()} ${mndNamen[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function renderWeekStrip(){
+  const td=vandaag();
+  let h='<div class="week-strip" id="wstrip">';
+  for(let i=-1;i<=20;i++){
+    const d=new Date(td+'T12:00:00');d.setDate(d.getDate()+i);
+    const ds=d.toISOString().slice(0,10);
+    const gesel=ds===planDatum;
+    const isVandaag=ds===td;
+    const heeftStops=DB.routes.some(r=>r.datum===ds);
+    h+=`<div class="week-dag${gesel?' geselecteerd':''}${isVandaag?' week-dag-vandaag':''}${heeftStops?' heeft-stops':''}" onclick="selecteerDag('${ds}')">
+      <div class="week-dag-naam">${dagKort[d.getDay()]}</div>
+      <div class="week-dag-num">${d.getDate()}</div>
+      <div class="week-dag-dot${heeftStops?'':' leeg'}"></div>
+    </div>`;
+  }
+  h+='</div>';
+  document.getElementById('week-strip-container').innerHTML=h;
+  setTimeout(()=>{const el=document.querySelector('.week-dag.geselecteerd');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});},50);
+}
+
+function selecteerDag(datum){
+  planDatum=datum;
+  renderWeekStrip();
+  renderDagTitel(datum);
+  renderRoute(datum);
+  if(kalZichtbaar)renderKalender();
+}
+
+function renderRoute(datum){
+  const stops=routeVoorDag(datum);
+  const container=document.getElementById('route-container');
+  if(!stops.length){
+    container.innerHTML=`<div class="leeg"><div class="leeg-icon">📭</div><div style="font-size:14px;font-weight:600;margin-bottom:6px;">Geen stops gepland</div><div style="font-size:13px;">Tik op "+ Stop" om een klant toe te voegen</div></div>`;
+    return;
+  }
+  const totCont=stops.reduce((s,r)=>{const k=DB.klanten.find(x=>x.id===r.klantId);return s+(k?k.containers.length:0);},0);
+  const gedaan=stops.filter(s=>s.gereinigd).length;
+  const isVandaag=datum===vandaag();
+  let h=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">${stops.length} stop${stops.length!==1?'s':''} · ${totCont} container${totCont!==1?'s':''}${isVandaag?` · ${gedaan}/${stops.length} gereinigd`:''}</div>`;
+  h+=`<div id="drag-lijst" data-datum="${datum}">`;
+  stops.forEach((stop,i)=>{
+    const k=DB.klanten.find(x=>x.id===stop.klantId);
+    if(!k)return;
+    const saldo=k.type==='pakket'?`<span class="badge ${k.resterendeBeurten<=DB.inst.pakket_drempel?'badge-rood':'badge-blauw'}">${k.resterendeBeurten} beurt(en)</span>`:`<span class="badge badge-groen">Contract</span>`;
+    var stopConts=stop.containers&&stop.containers.length>0?stop.containers:k.containers.map(function(c){return c.naam;});    var conts=stopConts.map(function(naam){return '<span class="cont-pill">'+contIcon(naam)+' '+naam+'</span>';}).join('');
+    h+=`<div class="route-kaart" data-sid="${stop.id}">
+      <div class="route-kaart-header">
+        <div class="sleep-handvat" data-sid="${stop.id}">⠿</div>
+        <div class="route-nr${stop.gereinigd?' gedaan':''}">${stop.gereinigd?'✓':i+1}</div>
+        <div class="route-info">
+          <div class="route-naam">${k.naam} ${saldo}</div>
+          <div class="route-adres">📍 ${k.adres}${stop.tijd?' · '+stop.tijd:''}</div>
+          ${stop.notitie?`<div style="font-size:11px;color:var(--oranje);margin-top:2px;">📝 ${stop.notitie}</div>`:''}
+          <div class="route-conts">${conts}</div>
+        </div>
+      </div>
+      <div class="route-footer">
+        ${isVandaag&&!stop.gereinigd?`<button class="btn btn-primary btn-sm" onclick="openReinigingSheetStop('${stop.id}')">🧹 Voltooien</button>`:''}
+        ${stop.gereinigd?'<span class="badge badge-groen" style="font-size:12px;">✓ Gereinigd</span>':''}
+        <button class="btn btn-secondary btn-sm" onclick="wijzigStopDatum('${stop.id}')" style="margin-left:auto;">📅</button><a href="https://maps.google.com/?q=${encodeURIComponent(k.adres)}" target="_blank" class="btn btn-secondary btn-sm">🗺️</a>
+        <button class="btn btn-secondary btn-sm" onclick="verwijderStop('${stop.id}')" style="color:var(--rood);padding:6px 8px;">✕</button>
+      </div>
+    </div>`;
+  });
+  h+='</div>';
+  container.innerHTML=h;
+  initDrag();
+}
+
+// ===== DRAG & DROP =====
+function initDrag(){
+  document.querySelectorAll('.sleep-handvat').forEach(h=>{
+    h.addEventListener('mousedown',e=>beginDrag(e,false));
+    h.addEventListener('touchstart',e=>beginDrag(e,true),{passive:false});
+  });
+}
+
+function beginDrag(e,isTouch){
+  const sid=e.currentTarget.dataset.sid;
+  dragEl=document.querySelector(`.route-kaart[data-sid="${sid}"]`);
+  if(!dragEl)return;
+  if(isTouch)e.preventDefault();
+  const clientY=isTouch?e.touches[0].clientY:e.clientY;
+  const clientX=isTouch?e.touches[0].clientX:e.clientX;
+  const rect=dragEl.getBoundingClientRect();
+  dragOffsetY=clientY-rect.top;
+  dragDatum=document.getElementById('drag-lijst').dataset.datum;
+  // Ghost
+  dragGhost=dragEl.cloneNode(true);
+  dragGhost.className='drag-ghost route-kaart';
+  dragGhost.style.cssText+=`;width:${rect.width}px;top:${rect.top}px;left:${rect.left}px;`;
+  document.body.appendChild(dragGhost);
+  // Placeholder
+  dragPlaceholder=document.createElement('div');
+  dragPlaceholder.className='drag-placeholder';
+  dragPlaceholder.textContent='↕ Laat hier los';
+  dragEl.after(dragPlaceholder);
+  dragEl.style.opacity='0.25';
+  const mv=isTouch?'touchmove':'mousemove';
+  const up=isTouch?'touchend':'mouseup';
+  const onMove=ev=>{
+    const cy=ev.touches?ev.touches[0].clientY:ev.clientY;
+    const cx=ev.touches?ev.touches[0].clientX:ev.clientX;
+    dragGhost.style.top=(cy-dragOffsetY)+'px';
+    // Tijdelijk verberg ghost voor hit testing
+    dragGhost.style.display='none';
+    const onder=document.elementFromPoint(cx,cy);
+    dragGhost.style.display='';
+    if(onder){const doel=onder.closest('.route-kaart');if(doel&&doel!==dragEl){const r=doel.getBoundingClientRect();if(cy<r.top+r.height/2)doel.before(dragPlaceholder);else doel.after(dragPlaceholder);}}
+    if(ev.cancelable)ev.preventDefault();
+  };
+  const onUp=()=>{
+    document.removeEventListener(mv,onMove);
+    document.removeEventListener(up,onUp);
+    dragGhost&&dragGhost.remove();dragGhost=null;
+    dragEl.style.opacity='';
+    dragPlaceholder&&dragPlaceholder.replaceWith(dragEl);dragPlaceholder=null;
+    // Nieuwe volgorde opslaan
+    const nieuweVolgorde=[];
+    document.querySelectorAll('#drag-lijst .route-kaart').forEach((c,i)=>{
+      const s=DB.routes.find(r=>r.id===c.dataset.sid);
+      if(s){s.volgorde=i;nieuweVolgorde.push({id:s.id,volgorde:i});}
+    });
+    slaLokaal();
+    apiUpdateVolgorde(nieuweVolgorde);
+    renderRoute(dragDatum);
+    renderWeekStrip();
+    toast('✓ Volgorde opgeslagen','var(--groen)');
+    dragEl=null;
+  };
+  document.addEventListener(mv,onMove,{passive:false});
+  document.addEventListener(up,onUp);
+}
+
+// ===== KALENDER =====
+function toggleKalender(){
+  kalZichtbaar=!kalZichtbaar;
+  document.getElementById('kalender-container').style.display=kalZichtbaar?'':'none';
+  document.getElementById('kal-btn').textContent=kalZichtbaar?'✕ Sluit kalender':'📅 Kalender';
+  if(kalZichtbaar)renderKalender();
+}
+function kalenderMaand(d){kalMaand=new Date(kalMaand.getFullYear(),kalMaand.getMonth()+d,1);renderKalender();}
+function renderKalender(){
+  const y=kalMaand.getFullYear(),m=kalMaand.getMonth();
+  const td=vandaag();
+  let h=`<div class="kaart" style="margin-bottom:14px;"><div class="kaart-body">
+    <div class="kalender-nav"><button class="btn btn-secondary btn-sm" onclick="kalenderMaand(-1)">‹</button><span class="kalender-maand">${MndNamen[m]} ${y}</span><button class="btn btn-secondary btn-sm" onclick="kalenderMaand(1)">›</button></div>
+    <div class="kal-grid">`;
+  ['Ma','Di','Wo','Do','Vr','Za','Zo'].forEach(n=>{h+=`<div class="kal-header">${n}</div>`;});
+  const eerste=new Date(y,m,1);
+  let dow=eerste.getDay();dow=(dow+6)%7;
+  for(let i=0;i<dow;i++)h+=`<div class="kal-dag leeg"></div>`;
+  const aantaldagen=new Date(y,m+1,0).getDate();
+  for(let d=1;d<=aantaldagen;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const stops=DB.routes.filter(r=>r.datum===ds);
+    const gedaan=stops.filter(s=>s.gereinigd).length;
+    const open=stops.length-gedaan;
+    const isVandaag=ds===td;
+    const gesel=ds===planDatum;
+    let dots='';
+    if(gedaan>0)dots+=`<div class="kal-dot" style="background:var(--groen);"></div>`;
+    if(open>0)dots+=`<div class="kal-dot" style="background:var(--blauw);"></div>`;
+    h+=`<div class="kal-dag${isVandaag?' vandaag':''}${gesel?' gesel':''}" onclick="selecteerDag('${ds}');toggleKalender();" style="${gesel?'background:var(--groen-licht);':''}">
+      <div class="kal-num">${d}</div>
+      ${dots?`<div class="kal-dots">${dots}</div>`:''}
+    </div>`;
+  }
+  h+=`</div></div></div>`;
+  document.getElementById('kalender-container').innerHTML=h;
+}
+
+// ===== STOP TOEVOEGEN =====
+function openStopSheet(datum){
+  const d=datum||planDatum;
+  document.getElementById('stop-datum').value=d;
+  document.getElementById('stop-klant-id').value='';
+  document.getElementById('stop-zoek').value='';
+  document.getElementById('stop-notitie').value='';
+  document.getElementById('stop-suggesties').style.display='none';
+  document.getElementById('stop-klant-gekozen').style.display='none';
+  var cw=document.getElementById('stop-containers-wrap');if(cw)cw.style.display='none';
+  document.getElementById('sheet-stop').classList.add('open');
+}
+function zoekStopKlant(zoek){
+  const sug=document.getElementById('stop-suggesties');
+  if(!zoek){sug.style.display='none';return;}
+  const gev=DB.klanten.filter(k=>k.naam.toLowerCase().includes(zoek.toLowerCase())).slice(0,6);
+  if(!gev.length){sug.style.display='none';return;}
+  sug.innerHTML=gev.map(k=>`<div class="lijst-item" onclick="kiesStopKlant('${k.id}','${k.naam.replace(/'/g,"\\'")}')"><div class="lijst-item-info"><div class="lijst-item-naam">${k.naam}</div><div class="lijst-item-sub">${k.adres}</div></div></div>`).join('');
+  sug.style.display='';
+}
+function kiesStopKlant(id,naam){
+  document.getElementById("stop-klant-id").value=id;
+  document.getElementById("stop-zoek").value=naam;
+  document.getElementById("stop-suggesties").style.display="none";
+  var el=document.getElementById("stop-klant-gekozen");
+  el.innerHTML="✓ "+naam+' <button onclick="document.getElementById(\'stop-klant-id\').value=\'\';document.getElementById(\'stop-zoek\').value=\'\';document.getElementById(\'stop-klant-gekozen\').style.display=\'none\';document.getElementById(\'stop-containers-wrap\').style.display=\'none\';" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;float:right;">✕</button>';
+  el.style.display="block";
+  var k=DB.klanten.find(function(x){return x.id===id;});
+  var wrap=document.getElementById("stop-containers-wrap");
+  var sel=document.getElementById("stop-containers-selectie");
+  if(k&&k.containers.length>1){
+    wrap.style.display="";
+    var sh="";
+    k.containers.forEach(function(c){
+      sh+="<label style=\"display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--groen);border-radius:9px;margin-bottom:8px;cursor:pointer;background:var(--groen-licht);\">"
+        +"<input type=\"checkbox\" value=\""+c.naam+"\" checked style=\"width:18px;height:18px;cursor:pointer;accent-color:var(--groen);\">"
+        +"<span style=\"font-size:13px;\">"+contIcon(c.naam)+" "+c.naam+"</span>"
+        +"</label>";
+    });
+    sel.innerHTML=sh;
+  } else {
+    wrap.style.display="none";
+  }
+}
+function slaStopOp(){
+  var klantId=document.getElementById("stop-klant-id").value;
+  var datum=document.getElementById("stop-datum").value;
+  if(!klantId){toast("⚠️ Kies een klant");return;}
+  if(!datum){toast("⚠️ Kies een datum");return;}
+  var k=DB.klanten.find(function(x){return x.id===klantId;});
+  var gesCont=[];
+  var cbs=document.querySelectorAll("#stop-containers-selectie input[type=checkbox]");
+  if(cbs.length>0){
+    cbs.forEach(function(cb){if(cb.checked)gesCont.push(cb.value);});
+    if(gesCont.length===0){toast("⚠️ Kies minstens 1 container");return;}
+  } else {
+    gesCont=k?k.containers.map(function(c){return c.naam;}):[];
+  }
+  var bestaande=DB.routes.filter(function(r){return r.datum===datum;});
+  var stop={id:uuid(),datum:datum,klantId:klantId,volgorde:bestaande.length,tijd:document.getElementById("stop-tijd").value,notitie:document.getElementById("stop-notitie").value,gereinigd:false,containers:gesCont};
+  DB.routes.push(stop);
+  slaLokaal();
+  sluitSheet("sheet-stop");
+  // Reset container wrap
+  document.getElementById("stop-containers-wrap").style.display="none";
+  document.getElementById("stop-klant-gekozen").style.display="none";
+  planDatum=datum;
+  selecteerDag(datum);
+  toast("✅ Stop toegevoegd!","var(--groen)");
+  // Stuur klantgegevens mee zodat script direct mail kan sturen
+  var stopMetKlant=Object.assign({},stop,{
+    klantMail:k?k.mail:'',
+    klantNaam:k?k.naam:'',
+    klantContainers:gesCont
+  });
+  apiSlaStopOp(stopMetKlant);
+}
+function verwijderStop(sid){
+  if(!confirm('Stop verwijderen?'))return;
+  const datum=DB.routes.find(r=>r.id===sid)?.datum||planDatum;
+  DB.routes=DB.routes.filter(r=>r.id!==sid);
+  DB.routes.filter(r=>r.datum===datum).sort((a,b)=>a.volgorde-b.volgorde).forEach((r,i)=>r.volgorde=i);
+  slaLokaal();renderWeekStrip();renderRoute(planDatum);toast('Stop verwijderd');
+  apiVerwijderStop(sid);
+}
+
+// ===== MELDINGEN =====
+function renderMeldingen(){
+  const al=DB.klanten.filter(isAlert);
+  let h=`<div class="kaart-header"><span class="kaart-titel">⚠️ Actieve meldingen (${al.length})</span></div><div class="kaart-body">`;
+  if(!al.length)h+=`<div class="leeg"><div class="leeg-icon">✅</div><div style="font-size:13px;">Geen meldingen</div></div>`;
+  else al.forEach(k=>{let t='',c='var(--oranje)';if(k.type==='pakket'){t=`Nog ${k.resterendeBeurten} beurt(en)`;if(k.resterendeBeurten<=1)c='var(--rood)';}else{const d=dagenTot(k.contractEind);if(d<0){t=`Verlopen op ${fmtD(k.contractEind)}`;c='var(--rood)';}else{t=`Vervalt over ${d} dag(en)`;}}
+    h+=`<div class="melding-item"><div class="melding-dot" style="background:${c};"></div><div style="flex:1;"><div style="font-size:13px;font-weight:600;">${k.naam}</div><div style="font-size:12px;color:var(--muted);">${t}</div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"><button class="btn btn-wa btn-sm" onclick="stuurWAKlant('${k.id}')">💬 WhatsApp</button><button class="btn btn-mail btn-sm" onclick="stuurMailKlant('${k.id}')">📧 Mail</button></div></div></div>`;
+  });
+  h+=`</div>`;document.getElementById('urgente-meldingen').innerHTML=h;
+  const ins=DB.inst;
+  document.getElementById('melding-inst').innerHTML=`
+    <div class="toggle-rij"><div><div style="font-size:13px;font-weight:600;">Pakket bijna op (≤${ins.pakket_drempel} beurten)</div><div style="font-size:11px;color:var(--muted);">E-mail + WhatsApp</div></div><label class="toggle"><input type="checkbox" ${ins.wa?'checked':''} onchange="DB.inst.wa=this.checked;slaDB();"><span class="toggle-slider"></span></label></div>
+    <div class="toggle-rij"><div><div style="font-size:13px;font-weight:600;">Herinnering dag op voorhand</div><div style="font-size:11px;color:var(--muted);">WhatsApp naar klant</div></div><label class="toggle"><input type="checkbox" ${ins.herinnering?'checked':''} onchange="DB.inst.herinnering=this.checked;slaDB();"><span class="toggle-slider"></span></label></div>
+    <div class="toggle-rij"><div><div style="font-size:13px;font-weight:600;">Bevestiging na reiniging</div><div style="font-size:11px;color:var(--muted);">E-mail + WhatsApp + foto</div></div><label class="toggle"><input type="checkbox" ${ins.bevestiging?'checked':''} onchange="DB.inst.bevestiging=this.checked;slaDB();"><span class="toggle-slider"></span></label></div>`;
+}
+
+// ===== KLANT SHEET =====
+function openKlantSheet(id){
+  const k=id?DB.klanten.find(x=>x.id===id):null;
+  document.getElementById('klant-edit-id').value=id||'';
+  document.getElementById('sheet-klant-titel').textContent=k?'Klant bewerken':'Nieuwe klant';
+  ['k-naam','k-tel','k-mail','k-adres','k-notitie'].forEach(f=>{const m={naam:'naam',tel:'tel',mail:'mail',adres:'adres',notitie:'notitie'}[f.slice(2)];document.getElementById(f).value=k&&k[m]?k[m]:'';});
+  document.getElementById('k-startdatum').value=k?(k.contractStart||vandaag()):vandaag();
+  document.getElementById('k-cstart').value=k?(k.contractStart||vandaag()):vandaag();
+  document.getElementById('k-ceind').value=k?k.contractEind:'';
+  containers=k?[...k.containers]:[{naam:'240L groen — GFT'}];
+  huidigKlantType=k?k.type:'pakket';
+  selecteerType(huidigKlantType);
+  if(k&&k.type==='pakket')document.getElementById('k-beurten').value=k.aantalBeurten||10;
+  renderContainers();
+  document.getElementById('sheet-klant').classList.add('open');
+}
+function selecteerType(t){huidigKlantType=t;document.getElementById('type-pakket').classList.toggle('geselecteerd',t==='pakket');document.getElementById('type-contract').classList.toggle('geselecteerd',t==='contract');document.getElementById('veld-pakket').style.display=t==='pakket'?'':'none';document.getElementById('veld-contract').style.display=t==='contract'?'':'none';}
+
+function containerOpties(){
+  return [
+    {g:"── BEDRIJF ──"},
+    {n:"120L blauw — PMD (bedrijf)"},{n:"140L grijs — Restafval (bedrijf)"},
+    {n:"240L groen — GFT (bedrijf)"},{n:"240L grijs — Restafval (bedrijf)"},
+    {n:"240L bruin — GFT (bedrijf)"},{n:"360L grijs — Restafval (bedrijf)"},
+    {n:"660L grijs — Restafval (bedrijf)"},{n:"1100L grijs — Restafval (bedrijf)"},
+    {g:"── PARTICULIER ──"},
+    {n:"40L groen — GFT (particulier)"},{n:"60L grijs — Restafval (particulier)"},
+    {n:"120L groen — GFT (particulier)"},{n:"120L grijs — Restafval (particulier)"},
+    {n:"120L blauw — PMD (particulier)"},{n:"240L groen — GFT (particulier)"},
+    {n:"240L grijs — Restafval (particulier)"},
+    {g:"── SPECIAAL ──"},
+    {n:"Papiercontainer"},{n:"Glascontainer"},{n:"KGA container"}
+  ];
+}
+function contIcon(naam){
+  if(naam.indexOf("GFT")>=0||naam.indexOf("groen")>=0) return "🟢";
+  if(naam.indexOf("PMD")>=0||naam.indexOf("blauw")>=0) return "🔵";
+  if(naam.indexOf("Glas")>=0) return "🫙";
+  if(naam.indexOf("Papier")>=0) return "📦";
+  return "🗑️";
+}
+function renderContainers(){
+  var opties=containerOpties();
+  var html2="";
+  containers.forEach(function(c,i){
+    var opts="";
+    opties.forEach(function(o){
+      if(o.g){opts+="<option disabled>"+o.g+"</option>";}
+      else{
+        var sel=(c.naam===o.n&&c.custom!==true)?" selected":"";
+        opts+="<option value=\""+o.n+"\""+sel+">"+o.n+"</option>";
+      }
+    });
+    var isCustom=c.custom===true||!opties.find(function(o){return o.n===c.naam;});
+    opts+="<option value=\"__custom__\""+(isCustom?" selected":"")+">✏️ Eigen type ingeven...</option>";
+    html2+="<div style=\"margin-bottom:8px;padding:8px 10px;border:1px solid var(--grijs-rand);border-radius:9px;background:var(--grijs);\">";
+    html2+="<div style=\"display:flex;align-items:center;gap:8px;\">";
+    html2+="<span style=\"font-size:18px;\">"+contIcon(c.naam)+"</span>";
+    html2+="<select class=\"form-control\" style=\"flex:1;\" data-ci=\""+i+"\" onchange=\"containerSelectChange("+i+",this.value)\">"+opts+"</select>";
+    html2+="<button style=\"background:var(--rood-licht);color:var(--rood);border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-weight:700;\" onclick=\"containers.splice("+i+",1);renderContainers()\">✕</button>";
+    html2+="</div>";
+    if(isCustom){
+      html2+="<input type=\"text\" class=\"form-control\" style=\"margin-top:6px;\" placeholder=\"Naam container...\" value=\""+c.naam+"\" oninput=\"containers["+i+"].naam=this.value\">";
+    }
+    html2+="</div>";
+  });
+  document.getElementById("containers-invoer").innerHTML=html2;
+}
+function containerSelectChange(i,val){
+  if(val==="__custom__"){
+    containers[i].naam="";
+    containers[i].custom=true;
+  } else {
+    containers[i].naam=val;
+    containers[i].custom=false;
+  }
+  renderContainers();
+}
+function voegContainerToe(){containers.push({naam:"240L groen — GFT (bedrijf)",custom:false});renderContainers();}
+
+function slaKlantOp(){
+  const naam=document.getElementById('k-naam').value.trim();if(!naam){toast('⚠️ Naam verplicht');return;}
+  const id=document.getElementById('klant-edit-id').value||uuid();
+  const bestaand=DB.klanten.find(x=>x.id===id);
+  var beurtenSel=document.getElementById('k-beurten');var beurten=beurtenSel.value==='custom'?parseInt(document.getElementById('k-beurten-custom').value)||10:parseInt(beurtenSel.value)||10;
+  const klant={id,naam,type:huidigKlantType,adres:document.getElementById('k-adres').value,tel:document.getElementById('k-tel').value,mail:document.getElementById('k-mail').value,notitie:document.getElementById('k-notitie').value,containers:[...containers],aantalBeurten:huidigKlantType==='pakket'?beurten:0,resterendeBeurten:bestaand?bestaand.resterendeBeurten:(huidigKlantType==='pakket'?beurten:0),contractStart:huidigKlantType==='contract'?document.getElementById('k-cstart').value:document.getElementById('k-startdatum').value,contractEind:huidigKlantType==='contract'?document.getElementById('k-ceind').value:'',frequentie:huidigKlantType==='contract'?document.getElementById('k-freq').value:''};
+  if(bestaand)Object.assign(bestaand,klant);else DB.klanten.push(klant);
+  sluitSheet('sheet-klant');toast('✅ Klant opgeslagen!','var(--groen)');renderKlanten();updateBadge();
+  apiSlaKlantOp(klant);
+}
+function verwijderKlant(id){if(!confirm('Klant verwijderen?'))return;DB.klanten=DB.klanten.filter(k=>k.id!==id);slaLokaal();toast('🗑️ Klant verwijderd');apiVerwijderKlant(id);gaTerug();}
+
+// ===== REINIGING =====
+function openReinigingSheet(klantId){
+  var k=DB.klanten.find(function(x){return x.id===klantId;});if(!k)return;
+  huidigFotoData=null;
+  document.getElementById("rein-klant-id").value=klantId;
+  document.getElementById("rein-klant-id").dataset.stopId="";
+  document.getElementById("foto-area").style.display="";
+  document.getElementById("foto-preview-wrap").style.display="none";
+  document.getElementById("foto-input").value="";
+  var contHtml="";
+  k.containers.forEach(function(c){contHtml+="<span class=\"cont-pill\">"+contIcon(c.naam)+" "+c.naam+"</span>";});
+  document.getElementById("rein-klant-info").innerHTML=
+    "<div style=\"font-size:15px;font-weight:700;margin-bottom:4px;\">"+k.naam+"</div>"
+    +"<div style=\"font-size:12px;color:var(--muted);margin-bottom:8px;\">📍 "+k.adres+"</div>"
+    +"<div style=\"display:flex;flex-wrap:wrap;gap:5px;\">"+contHtml+"</div>";
+  var conts=k.containers.map(function(c){return c.naam;}).join(", ");
+  var bericht="Beste "+k.naam+",\n\nUw container(s) ("+conts+") werden vandaag gereinigd door ContainerCleaner.\n";
+  if(k.type==="pakket") bericht+="Na deze beurt heeft u nog "+Math.max(0,k.resterendeBeurten-1)+" beurt(en) resterend.\n";
+  bericht+="\nMet vriendelijke groeten,\nTeam ContainerCleaner\nwww.containercleaner.be\n+32 472 48 11 45\nMeerkensstraat 26 D, 3650 Dilsen-Stokkem";
+  document.getElementById("rein-bericht").value=bericht;
+  document.getElementById("sheet-reiniging").classList.add("open");
+}
+function openReinigingSheetStop(stopId){
+  var stop=DB.routes.find(function(r){return r.id===stopId;});if(!stop)return;
+  openReinigingSheet(stop.klantId);
+  document.getElementById("rein-klant-id").dataset.stopId=stopId;
+  var k=DB.klanten.find(function(x){return x.id===stop.klantId;});
+  var reinConts=stop.containers&&stop.containers.length>0?stop.containers:k.containers.map(function(c){return c.naam;});
+  var contHtml="";
+  reinConts.forEach(function(naam){contHtml+="<span class=\"cont-pill\">"+contIcon(naam)+" "+naam+"</span>";});
+  document.getElementById("rein-klant-info").innerHTML=
+    "<div style=\"font-size:15px;font-weight:700;margin-bottom:4px;\">"+k.naam+"</div>"
+    +"<div style=\"font-size:12px;color:var(--muted);margin-bottom:8px;\">📍 "+k.adres+"</div>"
+    +"<div style=\"display:flex;flex-wrap:wrap;gap:5px;\">"+contHtml+"</div>";
+  var conts=reinConts.join(", ");
+  var bericht="Beste "+k.naam+",\n\nUw container(s) ("+conts+") werden vandaag gereinigd door ContainerCleaner.\n";
+  if(k.type==="pakket") bericht+="Na deze beurt heeft u nog "+Math.max(0,k.resterendeBeurten-1)+" beurt(en) resterend.\n";
+  bericht+="\nMet vriendelijke groeten,\nTeam ContainerCleaner\nwww.containercleaner.be\n+32 472 48 11 45\nMeerkensstraat 26 D, 3650 Dilsen-Stokkem";
+  document.getElementById("rein-bericht").value=bericht;
+}
+function fotoGekozen(input){if(!input.files||!input.files[0])return;const r=new FileReader();r.onload=e=>{fotoData=e.target.result;document.getElementById('foto-preview').src=fotoData;document.getElementById('foto-area').style.display='none';document.getElementById('foto-preview-wrap').style.display='';};r.readAsDataURL(input.files[0]);}
+function verwijderFoto(){fotoData=null;document.getElementById('foto-area').style.display='';document.getElementById('foto-preview-wrap').style.display='none';document.getElementById('foto-input').value='';}
+function stuurWA(){const kId=document.getElementById('rein-klant-id').value;const k=DB.klanten.find(x=>x.id===kId);const b=document.getElementById('rein-bericht').value;const tel=k.tel.replace(/\s/g,'').replace('+','');window.open(`https://wa.me/${tel}?text=${encodeURIComponent(b)}`,'_blank');}
+function stuurMail(){const kId=document.getElementById('rein-klant-id').value;const k=DB.klanten.find(x=>x.id===kId);const b=document.getElementById('rein-bericht').value;window.open(`mailto:${k.mail}?subject=${encodeURIComponent('Reiniging ContainerCleaner - '+k.naam)}&body=${encodeURIComponent(b)}`,'_blank');}
+function stuurWAKlant(id){const k=DB.klanten.find(x=>x.id===id);const tel=k.tel.replace(/\s/g,'').replace('+','');window.open(`https://wa.me/${tel}?text=${encodeURIComponent('Beste '+k.naam+', dit is een bericht van ContainerCleaner.')}`,'_blank');}
+function stuurMailKlant(id){const k=DB.klanten.find(x=>x.id===id);window.open(`mailto:${k.mail}?subject=${encodeURIComponent('ContainerCleaner - '+k.naam)}`,'_blank');}
+function bevestigReiniging(){
+  const klantId=document.getElementById('rein-klant-id').value;
+  const stopId=document.getElementById('rein-klant-id').dataset.stopId;
+  const k=DB.klanten.find(x=>x.id===klantId);if(!k)return;
+  const nieuwResterend=k.type==='pakket'&&k.resterendeBeurten>0?k.resterendeBeurten-1:k.resterendeBeurten;
+  if(k.type==='pakket'&&k.resterendeBeurten>0)k.resterendeBeurten--;
+  const rein={id:uuid(),klantId,datum:vandaag(),notitie:document.getElementById('rein-notitie').value,foto:!!fotoData,berichtVerstuurd:true};
+  DB.reinigingen.push(rein);
+  if(stopId){const s=DB.routes.find(r=>r.id===stopId);if(s){s.gereinigd=true;apiSlaStopOp(s);}}
+  slaLokaal();sluitSheet('sheet-reiniging');
+  toast('✅ Reiniging geregistreerd! Mail wordt verstuurd…','var(--groen)');
+  apiSlaReinigingOp(rein,nieuwResterend);
+  // Stuur automatische bevestigingsmail via Apps Script
+  if(k.mail){
+    api('stuurReinigingMail',{
+      klantMail: k.mail,
+      klantNaam: k.naam,
+      containers: k.containers.map(c=>c.naam),
+      type: k.type,
+      nieuwResterend,
+      aantalBeurten: k.aantalBeurten,
+      datum: vandaag(),
+      notitie: document.getElementById('rein-notitie').value
+    }).then(r=>{
+      if(r&&r.ok) toast('✅ Mail verstuurd naar '+k.mail,'var(--groen)');
+      else toast('⚠️ Mail kon niet verstuurd worden','var(--oranje)');
+    });
+  }
+  if(huidigScherm==='planning')renderPlanning();
+  else if(huidigScherm==='dashboard')renderDashboard();
+  else renderKlantDetail(klantId);
+  updateBadge();
+}
+
+
+// ===== BETALINGEN =====
+function huidigeMaand(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');}
+function maandLabel(m){var p=m.split('-');return ['','Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'][parseInt(p[1])]+' '+p[0];}
+function getBetalingStatus(klantId,maand){var b=DB.betalingen&&DB.betalingen.find(function(x){return x.klantId===klantId&&x.maand===maand;});return b?b.status:'open';}
+function updateBetaling(klantId,maand,status){
+  if(!DB.betalingen)DB.betalingen=[];
+  var b=DB.betalingen.find(function(x){return x.klantId===klantId&&x.maand===maand;});
+  if(b){b.status=status;}else{DB.betalingen.push({id:uuid(),klantId:klantId,maand:maand,status:status});}
+  slaLokaal();
+  api('slaBetalingOp',{klantId:klantId,maand:maand,status:status,id:uuid()});
+  toast(status==='betaald'?'✅ Betaling gemarkeerd':'📋 Status bijgewerkt','var(--groen)');
+  renderDashboard();
+}
+
+// ===== DATUM WIJZIGEN =====
+function wijzigStopDatum(stopId){
+  var stop=DB.routes.find(function(r){return r.id===stopId;});
+  if(!stop)return;
+  var k=DB.klanten.find(function(x){return x.id===stop.klantId;});
+  var nieuw=prompt('Nieuwe datum voor "'+(k?k.naam:'stop')+'":\nHuidige datum: '+stop.datum+'\n\nNieuwe datum (JJJJ-MM-DD):',stop.datum);
+  if(!nieuw||nieuw===stop.datum)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(nieuw)){toast('⚠️ Gebruik formaat JJJJ-MM-DD');return;}
+  var oud=stop.datum;
+  stop.datum=nieuw;
+  stop.volgorde=DB.routes.filter(function(r){return r.datum===nieuw&&r.id!==stopId;}).length;
+  DB.routes.filter(function(r){return r.datum===oud;}).sort(function(a,b){return a.volgorde-b.volgorde;}).forEach(function(r,i){r.volgorde=i;});
+  slaLokaal();apiSlaStopOp(stop);
+  selecteerDag(nieuw);
+  toast('✅ Stop verplaatst naar '+nieuw,'var(--groen)');
+}
+
+// ===== INIT =====
+planDatum=vandaag();
+document.getElementById('k-startdatum').value=vandaag();
+document.getElementById('k-cstart').value=vandaag();
+(async()=>{
+  await laadDB();
+  renderDashboard();
+  updateBadge();
+})();
+</script>
+</body>
+</html>
